@@ -183,7 +183,7 @@ class CreateTestForm extends React.Component {
       this.sendAlert('error','Invalid input','Invalid Test start time');
     } else if(Date.parse(this.state.endTime) >= Date.parse(this.state.resultTime)) {
       this.sendAlert('error','Invalid input','Invalid Test result time');
-    } else if((Date.parse(this.state.endTime) - Date.parse(this.state.startTime) - dur) <= 0) {
+    } else if((Date.parse(this.state.endTime) - Date.parse(this.state.startTime) - dur) < 0) {
       this.sendAlert('error','Invalid input','Invalid Test duration time');
     } else {
       this.props.createTestAction({...this.state,duration:dur/1000});

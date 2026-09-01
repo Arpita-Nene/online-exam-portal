@@ -66,6 +66,14 @@ var createTest = async (req,res,next) => {
       message : "Permissions not granted!"
     })
   }
+ 
+  //new
+  // Parse HH:mm string format to numeric minutes if string is received
+  if (typeof req.body.duration === 'string' && req.body.duration.includes(':')) {
+    const parts = req.body.duration.split(':');
+    req.body.duration = (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
+  }
+  //new
 
   req.check('title','Empty Title').notEmpty();
   req.check('subjects','Invalid length of list of subjects').isArray({min:1})
@@ -75,7 +83,7 @@ var createTest = async (req,res,next) => {
   req.check('queTypes.*','Invalid queType').notEmpty();
   req.check('startTime','Invalid Start Time').notEmpty();
   req.check('endTime','Invalid End Time').notEmpty();
-  req.check('duration','Invalid duration').notEmpty();
+  //req.check('duration','Invalid duration').notEmpty();
   req.check('regStartTime','Invalid registration start time').notEmpty();
   req.check('regEndTime','Invalid registration end time').notEmpty();
   req.check('resultTime','Invalid result time').notEmpty();
