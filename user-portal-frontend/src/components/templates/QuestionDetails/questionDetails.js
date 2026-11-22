@@ -29,12 +29,12 @@ class QuestionDetails extends React.Component {
   render(){
     if(this.props.questionDetails.searched === true) {
       return(<div className={this.props.classes.questionDetails}>
-        <QuestionSearchBox searchCallback={this.props.searchQuestion}/>
+        <QuestionSearchBox style={{color:'white'}} searchCallback={this.props.searchQuestion}/>
         <QuestionTable/>
       </div>)
     } else if(this.props.questionDetails.question._id !== undefined) {
       return(<div className={this.props.classes.questionDetails}>
-        <QuestionSearchBox searchCallback={this.props.searchQuestion} className={this.props.classes.questionDetails}/>
+        <QuestionSearchBox  searchCallback={this.props.searchQuestion}/>
         <br/>
         <ViewnUpdateQuestion className={this.props.classes.questionDetails}/>
         <Button onClick={this.props.goBacktoSearch}>Back</Button>

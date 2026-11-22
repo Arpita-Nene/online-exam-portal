@@ -1,3 +1,69 @@
+// import React from 'react';
+// import AlertBox from '../../atoms/Alertbox/AlertBox';
+// import StudentRegisterForm from '../../templates/studentRegisterForm/studentRegisterForm';
+// import { Button } from '@material-ui/core';
+// import { AppBar, Toolbar, Typography, withStyles } from '@material-ui/core';
+// import { Navigate } from 'react-router-dom';
+
+// const useStyles = (theme) => ({
+//   addHeight : theme.mixins.toolbar,
+//   title : {
+//     flexGrow : 1
+//   },
+//   main : {
+//     textAlign : 'center',
+//     paddingTop : '5%'
+//   }
+// })
+
+// class StudentRegisterPage extends React.Component {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       gotoHome: false
+//     }
+//   }
+
+//   onHomeClick() {
+//     this.setState({
+//       ...this.state,
+//       gotoHome : true
+//     })
+//   }
+
+//   render() {
+//     if(this.state.gotoHome) {
+//       return (<Navigate to='/'/>)
+//     }
+//     return(
+//       <div>
+//           <AppBar
+//           elevation={0}
+//           className={this.props.classes.appbar}
+//           >
+//             <Toolbar>
+//                   <Typography variant='h5' className={this.props.classes.title}>
+//                     Student Register 
+//                   </Typography>
+//                   <Typography variant='h6'>
+//                     <Button variant="contained" className={this.props.classes.endtestbtn} onClick={()=>(this.onHomeClick())}>Home</Button>
+//                   </Typography>
+//             </Toolbar>
+//           </AppBar>
+//           <div className={this.props.classes.addHeight}></div>
+//           <div className={this.props.classes.main}>
+//           <AlertBox/>
+//           <StudentRegisterForm/>
+//           </div>
+//         </div>
+//     )
+//   }
+// }
+
+
+// export default withStyles(useStyles)(StudentRegisterPage);
+
+
 import React from 'react';
 import AlertBox from '../../atoms/Alertbox/AlertBox';
 import StudentRegisterForm from '../../templates/studentRegisterForm/studentRegisterForm';
@@ -6,60 +72,88 @@ import { AppBar, Toolbar, Typography, withStyles } from '@material-ui/core';
 import { Navigate } from 'react-router-dom';
 
 const useStyles = (theme) => ({
-  addHeight : theme.mixins.toolbar,
-  title : {
-    flexGrow : 1
+  addHeight: theme.mixins.toolbar,
+
+  appbar: {
+    backgroundColor: 'rgba(20, 30, 48, 0.95)',
+    borderBottom: '1px solid rgba(7, 207, 218, 0.35)',
   },
-  main : {
-    textAlign : 'center',
-    paddingTop : '5%'
-  }
-})
+
+  title: {
+    flexGrow: 1,
+    color: '#07cfda',
+    fontWeight: 600,
+  },
+
+  main: {
+    textAlign: 'center',
+    padding: '35px 16px',
+    minHeight: 'calc(100vh - 64px)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  endtestbtn: {
+    backgroundColor: '#07cfda',
+    color: '#141e30',
+    fontWeight: 600,
+    '&:hover': {
+      backgroundColor: '#05b5bf',
+    },
+  },
+});
 
 class StudentRegisterPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       gotoHome: false
-    }
+    };
   }
 
   onHomeClick() {
     this.setState({
-      ...this.state,
-      gotoHome : true
-    })
+      gotoHome: true
+    });
   }
 
   render() {
-    if(this.state.gotoHome) {
-      return (<Navigate to='/'/>)
+    if (this.state.gotoHome) {
+      return <Navigate to='/' />;
     }
-    return(
+
+    return (
       <div>
-          <AppBar
+        <AppBar
           elevation={0}
           className={this.props.classes.appbar}
-          >
-            <Toolbar>
-                  <Typography variant='h5' className={this.props.classes.title}>
-                    Student Register 
-                  </Typography>
-                  <Typography variant='h6'>
-                    <Button variant="contained" className={this.props.classes.endtestbtn} onClick={()=>(this.onHomeClick())}>Home</Button>
-                  </Typography>
-            </Toolbar>
-          </AppBar>
-          <div className={this.props.classes.addHeight}></div>
-          <div className={this.props.classes.main}>
-          <AlertBox/>
-          <StudentRegisterForm/>
-          </div>
+        >
+          <Toolbar>
+            <Typography variant='h5' className={this.props.classes.title}>
+              Student Register
+            </Typography>
+
+            <Button
+              variant="contained"
+              className={this.props.classes.endtestbtn}
+              onClick={() => this.onHomeClick()}
+            >
+              Home
+            </Button>
+          </Toolbar>
+        </AppBar>
+
+        <div className={this.props.classes.addHeight}></div>
+
+        <div className={this.props.classes.main}>
+          <AlertBox />
+          <StudentRegisterForm />
         </div>
-    )
+      </div>
+    );
   }
 }
 
-
 export default withStyles(useStyles)(StudentRegisterPage);
-
