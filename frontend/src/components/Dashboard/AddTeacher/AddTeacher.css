@@ -1,8 +1,112 @@
-.form-class {
+/* .form-class {
   background-color: white;
   padding: 50px 100px;
 }
 
 h2, .linkbtn {
   color:black
+} */
+
+.add-teacher-page {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.add-teacher-card {
+  width: 100%;
+  max-width: 500px;
+  padding: 35px 40px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(7, 207, 218, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.add-teacher-card h2 {
+  color: #07cfda;
+  text-align: center;
+  margin: 0 0 10px;
+  font-size: 27px;
+}
+
+.teacher-form-description {
+  color: #c5cbd3;
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+.teacher-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.teacher-form-group label {
+  color: #f1eee6;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.teacher-form-group input {
+  padding: 12px 14px;
+  border: 1px solid #526477;
+  border-radius: 6px;
+  background: #243b55;
+  color: white;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.teacher-form-group input:focus {
+  border-color: #07cfda;
+  box-shadow: 0 0 5px rgba(7, 207, 218, 0.35);
+}
+
+.teacher-form-group input::placeholder {
+  color: #aab5c2;
+}
+
+.teacher-submit-btn {
+  width: 100%;
+  padding: 13px;
+  background: #07cfda;
+  color: #141e30;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-top: 5px;
+}
+
+.teacher-submit-btn:hover {
+  background: #05b5bf;
+}
+
+.teacher-back-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: #07cfda;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.teacher-back-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .add-teacher-card {
+    padding: 28px 22px;
+  }
 }

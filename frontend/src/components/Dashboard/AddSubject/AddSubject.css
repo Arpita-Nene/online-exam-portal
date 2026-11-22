@@ -1,8 +1,114 @@
-.form-class {
+/* .form-class {
   background-color: white;
   padding: 50px 100px;
+  border: 3px solid rgb(47, 48, 138);
+  border-radius: 10px 10px 10px 10px;
+  margin: 100px 100px 100px 100px;
 }
 
 h2, .linkbtn {
   color:black
+} */
+
+.add-subject-page {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.add-subject-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 40px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(7, 207, 218, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.add-subject-card h2 {
+  color: #07cfda;
+  text-align: center;
+  margin: 0 0 10px;
+  font-size: 27px;
+}
+
+.form-description {
+  color: #c5cbd3;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.subject-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 25px;
+}
+
+.subject-form-group label {
+  color: #f1eee6;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.subject-form-group input {
+  padding: 13px 14px;
+  border: 1px solid #526477;
+  border-radius: 6px;
+  background: #243b55;
+  color: white;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.subject-form-group input:focus {
+  border-color: #07cfda;
+  box-shadow: 0 0 5px rgba(7, 207, 218, 0.35);
+}
+
+.subject-form-group input::placeholder {
+  color: #aab5c2;
+}
+
+.subject-submit-btn {
+  width: 100%;
+  padding: 13px;
+  background: #07cfda;
+  color: #141e30;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.subject-submit-btn:hover {
+  background: #05b5bf;
+}
+
+.subject-back-link {
+  display: block;
+  text-align: center;
+  margin-top: 22px;
+  color: #07cfda;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.subject-back-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .add-subject-card {
+    padding: 28px 22px;
+  }
 }

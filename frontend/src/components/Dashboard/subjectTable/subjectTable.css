@@ -1,4 +1,4 @@
-th, td {
+/* th, td {
   border : 1px solid black;
 }
 
@@ -12,4 +12,57 @@ th, td {
 .title {
   color:black;
   text-align: center;
+} */
+
+
+.main {
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  background: #1c3048;
+  color: #f1eee6;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.title {
+  color: #07cfda;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.main table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #f1eee6;
+}
+
+.main th,
+.main td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(7, 207, 218, 0.2);
+}
+
+.main th {
+  color: #07cfda;
+  background: #141e30;
+}
+
+.main tr:hover {
+  background: rgba(7, 207, 218, 0.08);
+}
+
+.main td button {
+  background: transparent;
+  border: 1px solid #07cfda;
+  color: #07cfda;
+  padding: 7px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.main td button:hover {
+  background: #07cfda;
+  color: #141e30;
 }

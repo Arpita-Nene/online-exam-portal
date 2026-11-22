@@ -43,7 +43,7 @@ class Login extends React.Component {
       return (
         <div className="login-box">
         	<h2 className='login-box-title'>Admin Login</h2>
-	        <form onSubmit={this.handleSubmit}>
+	        <form onSubmit={this.handleSubmit} autoComplete="off">
 		        <div className="user-box">
 			        <input autoComplete="off" className="input-field" type="text" value={this.state.username} onChange={this.usernameInputHandler} required />
 			        <label>Username</label>
