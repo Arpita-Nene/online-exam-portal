@@ -3,37 +3,80 @@ import apis from "../../helper/Apis"
 import { ActionTypes } from "../action-types";
 import Auth from "../../helper/Auth"
 
+// export const addQuestionAction = (details) => {
+//   return async(dispatch)=> {
+//     const response = await axios.post(apis.BASE + apis.ADD_QUESTION,details,{
+//       headers:{
+//         'Authorization':`Bearer ${Auth.retriveToken()}`
+//       }
+//     });
+//     if(response.data.success) {
+//       dispatch({
+//         type:ActionTypes.SET_ALERT,
+//         payload : {
+//           isAlert : true,
+//           title : "Success",
+//           type : "success",
+//           message : response.data.message
+//         }
+//       })
+//     }
+//     else {
+//       dispatch({
+//         type:ActionTypes.SET_ALERT,
+//         payload : {
+//           isAlert : true,
+//           title : "Submit Error",
+//           type : "error",
+//           message : response.data.message
+//         }
+//       })
+//     }
+//   }
+// }
+
 export const addQuestionAction = (details) => {
-  return async(dispatch)=> {
-    const response = await axios.post(apis.BASE + apis.ADD_QUESTION,details,{
-      headers:{
-        'Authorization':`Bearer ${Auth.retriveToken()}`
-      }
-    });
-    if(response.data.success) {
-      dispatch({
-        type:ActionTypes.SET_ALERT,
-        payload : {
-          isAlert : true,
-          title : "Success",
-          type : "success",
-          message : response.data.message
+    return async (dispatch) => {
+        try {
+            console.log("Submitting question:", details);
+
+            const response = await axios.post(
+                apis.BASE + apis.ADD_QUESTION,
+                details,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${Auth.retriveToken()}`
+                    }
+                }
+            );
+
+            console.log("Backend response:", response.data);
+
+            dispatch({
+                type: ActionTypes.SET_ALERT,
+                payload: {
+                    isAlert: true,
+                    title: response.data.success ? "Success" : "Submit Error",
+                    type: response.data.success ? "success" : "error",
+                    message: response.data.message
+                }
+            });
+
+        } catch (error) {
+            console.error("Question submission error:", error.response || error);
+
+            dispatch({
+                type: ActionTypes.SET_ALERT,
+                payload: {
+                    isAlert: true,
+                    title: "Submit Error",
+                    type: "error",
+                    message: error.response?.data?.message || "Unable to submit question"
+                }
+            });
         }
-      })
-    }
-    else {
-      dispatch({
-        type:ActionTypes.SET_ALERT,
-        payload : {
-          isAlert : true,
-          title : "Submit Error",
-          type : "error",
-          message : response.data.message
-        }
-      })
-    }
-  }
-}
+    };
+};
 
 export const searchQuestion = (details) => {
   return async(dispatch)=>{
