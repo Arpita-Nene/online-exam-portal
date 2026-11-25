@@ -1,5 +1,7 @@
+var mongoose = require('mongoose');
 var subjectModel = require('../models/subject')
 var questionModel = require('../models/question');
+var testModel = require('../models/test');
 
 var addQuestion = (req,res,next)=>{
   var creator = req.user || null;
@@ -75,11 +77,98 @@ var addQuestion = (req,res,next)=>{
 }
 
 
+var getAllQuestions = (req,res,next)=>{
+  var creator = req.user || null
+  if(creator == null || creator.usertype != 'TEACHER') {
+    return res.status(401).json({
+      success : false,
+      message : "Permissions not granted!"
+    })
+  }
+
+  if(req.query.subjects !== undefined) {
+    var subjectIds = String(req.query.subjects).split(',').filter(Boolean);
+    var marks = req.query.marks === undefined || req.query.marks === ''
+      ? []
+      : String(req.query.marks).split(',').map(Number);
+
+    if(subjectIds.some((id)=>!mongoose.Types.ObjectId.isValid(id)) ||
+       marks.some((mark)=>!Number.isInteger(mark) || mark < 1 || mark > 4)) {
+      return res.status(400).json({
+        success : false,
+        message : 'Invalid question filters'
+      })
+    }
+
+    if(subjectIds.length === 0) {
+      return res.json({
+        success : true,
+        list : []
+      })
+    }
+
+    var filter = {
+      status : true,
+      subject : {$in:subjectIds}
+    };
+    if(marks.length > 0) {
+      filter.marks = {$in:marks};
+    }
+
+    return questionModel.find(filter, {_id:1,body:1,status:1,subject:1,marks:1})
+      .sort({createdAt:-1})
+      .then((questions)=>{
+        return subjectModel.find({_id:{$in:subjectIds}}, {name:1})
+          .then((subjects)=>{
+            var subjectNames = new Map(
+              subjects.map((subject)=>[subject._id.toString(),subject.name])
+            );
+            res.json({
+              success : true,
+              list : questions.map((question)=>{
+                var subjectId = question.subject ? question.subject.toString() : '';
+                return {
+                  _id : question._id,
+                  body : question.body,
+                  status : question.status,
+                  subjectId : subjectId,
+                  subjectName : subjectNames.get(subjectId) || '',
+                  marks : question.marks
+                }
+              })
+            })
+          })
+        })
+      .catch((err)=>{
+        console.log(err);
+        res.status(500).json({
+          success : false,
+          message : "Unable to get questions"
+        })
+      })
+  }
+
+  questionModel.find({createdBy:creator._id}, {_id:1,body:1,status:1}).sort({createdAt:-1})
+    .then((questions)=>{
+      res.json({
+        success : true,
+        list : questions
+      })
+    })
+    .catch((err)=>{
+      console.log(err);
+      res.status(500).json({
+        success : false,
+        message : "Unable to get questions"
+      })
+    })
+}
+
 // search questions from body
 var searchQuestion = (req,res,next)=>{
   var creator = req.user || null
   if(creator == null || req.user.usertype != 'TEACHER') {
-    res.status(401).json({
+    return res.status(401).json({
       success : false,
       message : "Permissions not granted!"
     })
@@ -97,8 +186,11 @@ var searchQuestion = (req,res,next)=>{
     })
   }
   else {
-    questionModel.find({body : new RegExp(req.body.query)}).limit(20).then((questions)=>{
-      result = questions.map((que)=>({_id:que._id,body:que.body,status:que.status}));
+    questionModel.find({
+      body : new RegExp(req.body.query),
+      createdBy : creator._id
+    }, {_id:1,body:1,status:1}).limit(20).then((questions)=>{
+      var result = questions.map((que)=>({_id:que._id,body:que.body,status:que.status}));
       res.json({
         success : true,
         list : result
@@ -112,6 +204,61 @@ var searchQuestion = (req,res,next)=>{
       })
     })
   }
+}
+
+var deleteQuestion = (req,res,next)=>{
+  var creator = req.user || null
+  if(creator == null || creator.usertype != 'TEACHER') {
+    return res.status(401).json({
+      success : false,
+      message : "Permissions not granted!"
+    })
+  }
+
+  req.check('id','Id not found').notEmpty();
+  var errors = req.validationErrors()
+  if(errors) {
+    return res.json({
+      success : false,
+      message : 'Invalid inputs',
+      errors : errors
+    })
+  }
+
+  questionModel.findOne({_id:req.body.id,createdBy:creator._id})
+    .then((question)=>{
+      if(!question) {
+        return res.json({
+          success : false,
+          message : 'Question not found'
+        })
+      }
+
+      return testModel.findOne({questions:question._id})
+        .then((test)=>{
+          if(test) {
+            return res.json({
+              success : false,
+              message : 'This question is used in a test and cannot be deleted'
+            })
+          }
+
+          return questionModel.deleteOne({_id:question._id,createdBy:creator._id})
+            .then(()=>{
+              res.json({
+                success : true,
+                message : 'Question deleted successfully'
+              })
+            })
+        })
+    })
+    .catch((err)=>{
+      console.log(err);
+      res.status(500).json({
+        success : false,
+        message : 'Unable to delete question'
+      })
+    })
 }
 
 //update question and ans
@@ -419,7 +566,9 @@ var getQuestionAnswerByIds = (req,res,next) => {
 
 module.exports = {
   addQuestion,
+  getAllQuestions,
   searchQuestion,
+  deleteQuestion,
   updateQuestion,
   getQuestionById,
   changeQuestionStatus,

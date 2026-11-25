@@ -23,47 +23,52 @@ const useStyles = (theme) => ({
   },
   tkey : {
     marginRight : '30px',
-    color : '#3f51b5',
+    color : '#8de2e6',
     minWidth : '100px',
     display : 'inline-block',
     padding : '5px 10px',
-    background : '#3f51b522',
+    background : 'rgba(49, 171, 183, 0.14)',
     borderRadius : '20px'
   },
   tbody : {
     margin : '5px',
-    background : '#eee',
+    color : '#edf4fc',
+    background : '#26364d',
     padding : '5px 10px',
     borderRadius : '20px',
-    display : 'inline-block'
+    display : 'inline-block',
+    maxWidth : 'calc(100% - 150px)',
+    overflowWrap : 'anywhere',
+    verticalAlign : 'top'
   },
   toption : {
     display : 'inline-block',
     margin : '5px 20px 5px 5px',
     padding : '3px 10px',
     borderRadius : '20px',
-    background : '#eee'
+    color : '#dce7f3',
+    background : '#26364d'
   },
   tcorrect : {
     display : 'inline-block',
     margin : '5px 20px 5px 5px',
     padding : '3px 10px',
     borderRadius : '20px',
-    color : 'green',
-    background : '#00ff0033'
+    color : '#86efac',
+    background : 'rgba(34, 197, 94, 0.18)'
   },
   tfalse : {
     display : 'inline-block',
     margin : '5px 20px 5px 5px',
     padding : '3px 10px',
     borderRadius : '20px',
-    color : 'red',
-    background : '#ff000033'
+    color : '#fca5a5',
+    background : 'rgba(239, 68, 68, 0.18)'
   },
   tablecell : {
     borderWidth : '1px 2px',
-    borderColor : '#777',
-    borderStyle : 'ridge'
+    borderColor : 'rgba(126, 158, 187, 0.18)',
+    borderStyle : 'solid'
   }
 })
 

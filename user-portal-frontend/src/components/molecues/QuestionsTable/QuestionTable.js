@@ -1,7 +1,8 @@
 import React from "react";
 import { withStyles } from "@material-ui/core/styles";
 import { connect } from "react-redux";
-import { TableBody, TableCell, TableRow, Table, TableHead, TableContainer, Paper, Button } from "@material-ui/core";
+import { TableBody, TableCell, TableRow, Table, TableHead, TableContainer, Paper, Button, IconButton } from "@material-ui/core";
+import DeleteIcon from "@material-ui/icons/Delete";
 import { changeQuestionStatus, searchQuestionById } from "../../../redux/actions/questionAction";
 
 const useStyles = (theme)=> ({
@@ -46,7 +47,11 @@ class QuestionTable extends React.Component {
             </TableRow>
           </TableHead>
           <TableBody>
-            {this.props.questionlist.map((question,index)=>(
+            {this.props.questionlist.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center">No questions found.</TableCell>
+              </TableRow>
+            ) : this.props.questionlist.map((question,index)=>(
               <TableRow key={index}>
                 <TableCell>{index+1}</TableCell>
                 <TableCell onClick={(event)=>(this.viewQuestion(question._id))}>{question.body}</TableCell>
@@ -55,13 +60,21 @@ class QuestionTable extends React.Component {
                 >
                   {(question.status===true)?'Active':'Blocked'}
                 </TableCell>
-                <TableCell> 
+                <TableCell>
                   <Button 
                     onClick={(event)=>(this.onQuestionStatusChange(event,question._id,question.status))}
                     style={(question.status===false)?{background:'#00ff0088'}:{background:'#ff0000aa'}}
                   >
                       {(question.status===true)?'block':'unblock'}
-                  </Button> 
+                  </Button>
+                  <IconButton
+                    aria-label={`Delete question ${index + 1}`}
+                    title="Delete question"
+                    size="small"
+                    onClick={()=>(this.props.onDeleteQuestion(question._id))}
+                  >
+                    <DeleteIcon fontSize="small"/>
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}

@@ -15,7 +15,9 @@ router.post('/getTestById',testService.getTestDetailsFromId);
 // teacher user specific routes 
 router.post('/addQuestion',questionService.addQuestion);
 router.get('/getAllSubjects',subjectService.getAllActiveSubject);
+router.get('/getAllQuestions',questionService.getAllQuestions);
 router.post('/searchQuestion',questionService.searchQuestion);
+router.post('/deleteQuestion',questionService.deleteQuestion);
 router.post('/updateQuestion',questionService.updateQuestion);
 router.post('/getQuestion',questionService.getQuestionById);
 router.post('/changeQuestionStatus',questionService.changeQuestionStatus);

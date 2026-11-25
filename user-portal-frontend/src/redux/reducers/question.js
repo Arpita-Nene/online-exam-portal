@@ -18,6 +18,19 @@ export const getQuestionReducer = (state=initialState, {type,payload})=> {
         answer : -1,
         question : {}
       };
+    case ActionTypes.GET_ALL_QUESTIONS:
+      return {
+        ...state,
+        list : payload.questionList,
+        searched : true,
+        answer : -1,
+        question : {}
+      };
+    case ActionTypes.DELETE_QUESTION:
+      return {
+        ...state,
+        list : state.list.filter((question)=>question._id !== payload.id)
+      };
     case ActionTypes.CHANGE_QUESTION_STATUS:
       var newlist = state.list.map((q)=>( q._id===payload.id ? 
         { 

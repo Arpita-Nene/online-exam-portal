@@ -387,6 +387,7 @@ import {
 import { connect } from "react-redux";
 
 import { getSubjectDetails } from "../../../redux/actions/subjectAction";
+import { getAllQuestions } from "../../../redux/actions/questionAction";
 import { setAlert } from "../../../redux/actions/alertAction";
 import { createTestAction } from "../../../redux/actions/teacherTestAction";
 
@@ -508,9 +509,51 @@ const useStyles = () => ({
 
   checkboxChecked: {},
 
+  questionList: {
+    maxHeight: "360px",
+    overflowY: "auto",
+    margin: "0 auto 18px",
+    maxWidth: "900px",
+    border: "1px solid #546579",
+    borderRadius: "8px",
+    textAlign: "left",
+  },
+
+  questionRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "10px 16px",
+    borderBottom: "1px solid rgba(148, 163, 184, 0.25)",
+  },
+
+  questionText: {
+    flex: 1,
+    color: "white",
+  },
+
+  questionDetails: {
+    color: "#cbd5e1",
+    whiteSpace: "nowrap",
+  },
+
+  selectionSummary: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "28px",
+    margin: "16px 0 24px",
+    color: "white",
+    fontWeight: 600,
+  },
+
   btn: {
     margin: "25px 20px 10px",
     padding: "10px 30px",
+  },
+
+  resetBtn: {
+    margin: "25px 10px 10px",
+    padding: "10px 24px",
   },
 });
 
@@ -521,8 +564,10 @@ class CreateTestForm extends React.Component {
     this.state = {
       title: "",
       subjects: [],
-      maxmarks: 30,
       queTypes: [],
+      availableQuestions: [],
+      selectedQuestions: [],
+      questionsLoading: false,
       startTime: "",
       endTime: "",
       duration: "00:30",
@@ -530,6 +575,7 @@ class CreateTestForm extends React.Component {
       regEndTime: "",
       resultTime: "",
     };
+    this.questionFetchId = 0;
   }
 
   titleInputHandler = (event) => {
@@ -540,44 +586,76 @@ class CreateTestForm extends React.Component {
   };
 
   subjectCheckboxInputHandler = (event) => {
-    var list = this.state.subjects;
-
-    if (event.target.checked) {
-      list.push(event.target.name);
-      this.setState({
-        ...this.state,
-        subjects: list,
-      });
-    } else {
-      this.setState({
-        ...this.state,
-        subjects: list.filter((v) => v !== event.target.name),
-      });
-    }
+    const subjects = event.target.checked
+      ? [...this.state.subjects, event.target.name]
+      : this.state.subjects.filter((subject) => subject !== event.target.name);
+    this.setState({ subjects }, this.fetchQuestions);
   };
 
   queTypestCheckboxInputHandler = (event) => {
-    var list = this.state.queTypes;
-    var n = parseInt(event.target.name);
-
-    if (event.target.checked) {
-      list.push(n);
-      this.setState({
-        ...this.state,
-        queTypes: list,
-      });
-    } else {
-      this.setState({
-        ...this.state,
-        queTypes: list.filter((v) => v !== n),
-      });
-    }
+    const mark = parseInt(event.target.name, 10);
+    const queTypes = event.target.checked
+      ? [...this.state.queTypes, mark]
+      : this.state.queTypes.filter((value) => value !== mark);
+    this.setState({ queTypes }, this.fetchQuestions);
   };
 
-  marksInputHandler = (event) => {
+  componentWillUnmount() {
+    this.questionFetchId += 1;
+  }
+
+  resetForm = () => {
+    this.questionFetchId += 1;
     this.setState({
-      ...this.state,
-      maxmarks: parseInt(event.target.value),
+      title: "",
+      subjects: [],
+      queTypes: [],
+      availableQuestions: [],
+      selectedQuestions: [],
+      questionsLoading: false,
+      startTime: "",
+      endTime: "",
+      duration: "00:30",
+      regStartTime: "",
+      regEndTime: "",
+      resultTime: "",
+    });
+  };
+
+  fetchQuestions = () => {
+    const requestId = ++this.questionFetchId;
+    const { subjects, queTypes } = this.state;
+
+    if (subjects.length === 0) {
+      this.setState({
+        availableQuestions: [],
+        questionsLoading: false,
+      });
+      return;
+    }
+
+    this.setState({ questionsLoading: true });
+    this.props.getAllQuestions({ subjects, marks: queTypes }).then((questions) => {
+      if (requestId !== this.questionFetchId) {
+        return;
+      }
+      this.setState({
+        availableQuestions: questions || [],
+        questionsLoading: false,
+      });
+    });
+  };
+
+  toggleQuestion = (question) => {
+    const isSelected = this.state.selectedQuestions.some(
+      (selected) => selected._id === question._id
+    );
+    this.setState({
+      selectedQuestions: isSelected
+        ? this.state.selectedQuestions.filter(
+            (selected) => selected._id !== question._id
+          )
+        : [...this.state.selectedQuestions, question],
     });
   };
 
@@ -632,53 +710,64 @@ class CreateTestForm extends React.Component {
     });
   }
 
-  timeStringtoMs(str) {
+  timeStringtoSeconds(str) {
     var hours = parseInt(str.substring(0, 2));
     var mins = parseInt(str.substring(3));
-    return (hours * 60 + mins) * 60 * 1000;
+    return (hours * 60 + mins) * 60;
   }
 
   handleSubmit(event) {
     event.preventDefault();
 
-    var dur = this.timeStringtoMs(this.state.duration);
+    const duration = this.timeStringtoSeconds(this.state.duration);
+    const registrationStart = Date.parse(this.state.regStartTime);
+    const registrationEnd = Date.parse(this.state.regEndTime);
+    const testStart = Date.parse(this.state.startTime);
+    const testEnd = Date.parse(this.state.endTime);
+    const resultTime = Date.parse(this.state.resultTime);
 
-    if (this.state.subjects.length < 1) {
-      this.sendAlert("error", "Invalid input", "select subject");
-    } else if (this.state.queTypes.length < 1) {
-      this.sendAlert("error", "Invalid input", "select question type");
+    if (this.state.selectedQuestions.length < 1) {
+      this.sendAlert("error", "Invalid input", "Select at least one question");
     } else if (
-      Date.parse(this.state.regStartTime) >=
-      Date.parse(this.state.regEndTime)
+      [registrationStart, registrationEnd, testStart, testEnd, resultTime].some(
+        (time) => !Number.isFinite(time)
+      )
+    ) {
+      this.sendAlert("error", "Invalid input", "Enter valid date and time values");
+    } else if (
+      registrationEnd <= registrationStart
     ) {
       this.sendAlert(
         "error",
         "Invalid input",
         "Invalid Registration start and end time"
       );
-    } else if (
-      Date.parse(this.state.startTime) >= Date.parse(this.state.endTime)
-    ) {
-      this.sendAlert("error", "Invalid input", "Invalid Test start and end time");
-    } else if (
-      Date.parse(this.state.regEndTime) >= Date.parse(this.state.startTime)
-    ) {
+    } else if (testStart <= registrationEnd) {
       this.sendAlert("error", "Invalid input", "Invalid Test start time");
-    } else if (
-      Date.parse(this.state.endTime) >= Date.parse(this.state.resultTime)
-    ) {
+    } else if (testEnd <= testStart) {
+      this.sendAlert("error", "Invalid input", "Invalid Test start and end time");
+    } else if (resultTime <= testEnd) {
       this.sendAlert("error", "Invalid input", "Invalid Test result time");
     } else if (
-      Date.parse(this.state.endTime) -
-        Date.parse(this.state.startTime) -
-        dur <
-      0
+      !Number.isFinite(duration) ||
+      duration <= 0 ||
+      duration * 1000 > testEnd - testStart
     ) {
       this.sendAlert("error", "Invalid input", "Invalid Test duration time");
     } else {
       this.props.createTestAction({
-        ...this.state,
-        duration: dur / 1000,
+        title: this.state.title,
+        questionIds: this.state.selectedQuestions.map((question) => question._id),
+        startTime: this.state.startTime,
+        endTime: this.state.endTime,
+        duration,
+        regStartTime: this.state.regStartTime,
+        regEndTime: this.state.regEndTime,
+        resultTime: this.state.resultTime,
+      }).then((created) => {
+        if (created) {
+          this.resetForm();
+        }
       });
     }
   }
@@ -726,6 +815,7 @@ class CreateTestForm extends React.Component {
               control={
                 <Checkbox
                   name={sub.id}
+                  checked={this.state.subjects.includes(sub.id)}
                   onChange={this.subjectCheckboxInputHandler}
                   classes={{
                     root: classes.checkboxRoot,
@@ -738,7 +828,6 @@ class CreateTestForm extends React.Component {
           ))}
         </FormGroup>
 
-        {/* UPDATED: Question Types heading and checkbox styling */}
         <FormLabel className={classes.sectionLabel}>
           Question Types
         </FormLabel>
@@ -751,6 +840,7 @@ class CreateTestForm extends React.Component {
               control={
                 <Checkbox
                   name={String(n)}
+                  checked={this.state.queTypes.includes(n)}
                   onChange={this.queTypestCheckboxInputHandler}
                   classes={{
                     root: classes.checkboxRoot,
@@ -763,23 +853,60 @@ class CreateTestForm extends React.Component {
           ))}
         </FormGroup>
 
-        <TextField
-          variant="outlined"
-          color="primary"
-          className={classes.optionInput}
-          label="Max Marks"
-          placeholder="Enter marks"
-          type="number"
-          value={this.state.maxmarks}
-          onChange={this.marksInputHandler}
-          required
-          InputProps={{
-            inputProps: {
-              max: 100,
-              min: 5,
-            },
-          }}
-        />
+        <FormLabel className={classes.sectionLabel}>
+          Questions
+        </FormLabel>
+
+        {this.state.subjects.length === 0 ? (
+          <div>Select a subject to view active questions.</div>
+        ) : this.state.questionsLoading ? (
+          <div>Loading questions...</div>
+        ) : this.state.availableQuestions.length === 0 ? (
+          <div>No active questions match these filters.</div>
+        ) : (
+          <div className={classes.questionList}>
+            {this.state.availableQuestions.map((question) => {
+              const isSelected = this.state.selectedQuestions.some(
+                (selected) => selected._id === question._id
+              );
+              return (
+                <div className={classes.questionRow} key={question._id}>
+                  <Checkbox
+                    checked={isSelected}
+                    onChange={() => this.toggleQuestion(question)}
+                    inputProps={{
+                      "aria-label": `Select question: ${question.body}`,
+                    }}
+                    classes={{
+                      root: classes.checkboxRoot,
+                      checked: classes.checkboxChecked,
+                    }}
+                  />
+                  <span className={classes.questionText}>{question.body}</span>
+                  <span className={classes.questionDetails}>
+                    {question.subjectName}
+                  </span>
+                  <span className={classes.questionDetails}>
+                    {question.marks} {Number(question.marks) === 1 ? "Mark" : "Marks"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className={classes.selectionSummary}>
+          <span>
+            Total Selected Questions: {this.state.selectedQuestions.length}
+          </span>
+          <span>
+            Total Marks:{" "}
+            {this.state.selectedQuestions.reduce(
+              (total, question) => total + Number(question.marks),
+              0
+            )}
+          </span>
+        </div>
 
         <TextField
           variant="outlined"
@@ -868,6 +995,14 @@ class CreateTestForm extends React.Component {
         <br />
 
         <Button
+          variant="outlined"
+          type="button"
+          className={classes.resetBtn}
+          onClick={this.resetForm}
+        >
+          Reset
+        </Button>
+        <Button
           variant="contained"
           color="primary"
           type="submit"
@@ -887,6 +1022,7 @@ const mapStatetoProps = (state) => ({
 export default withStyles(useStyles)(
   connect(mapStatetoProps, {
     getSubjectDetails,
+    getAllQuestions,
     setAlert,
     createTestAction,
   })(CreateTestForm)

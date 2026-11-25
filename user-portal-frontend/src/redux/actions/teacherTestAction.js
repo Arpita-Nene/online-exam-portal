@@ -5,32 +5,33 @@ import Auth from "../../helper/Auth"
 
 export const createTestAction = (details) => {
   return async(dispatch)=> {
-    const response = await axios.post(apis.BASE + apis.CREATE_QUESTION, details, {
-      headers:{
-        'Authorization':`Bearer ${Auth.retriveToken()}`
-      }
-    })
-    if(response.data.success) {
+    try {
+      const response = await axios.post(apis.BASE + apis.CREATE_QUESTION, details, {
+        headers:{
+          'Authorization':`Bearer ${Auth.retriveToken()}`
+        }
+      });
       dispatch({
         type:ActionTypes.SET_ALERT,
         payload : {
           isAlert : true,
-          title : "Success",
-          type : "success",
+          title : response.data.success ? "Success" : "Submit Error",
+          type : response.data.success ? "success" : "error",
           message : response.data.message
         }
-      })
-    }
-    else {
+      });
+      return response.data.success;
+    } catch(error) {
       dispatch({
         type:ActionTypes.SET_ALERT,
         payload : {
           isAlert : true,
           title : "Submit Error",
           type : "error",
-          message : response.data.message
+          message : error.response?.data?.message || "Unable to create test"
         }
-      })
+      });
+      return false;
     }
   }
 }

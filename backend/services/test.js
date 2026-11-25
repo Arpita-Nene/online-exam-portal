@@ -1,3 +1,4 @@
+var mongoose = require('mongoose');
 var testModel = require('../models/test');
 var questionModel = require('../models/question');
 const testRegistrationModel = require('../models/testRegistration');
@@ -23,67 +24,91 @@ var getTestStatus = (test) => {
   return status;
 }
 
-var generateTestpaper =  async(subjects, maxmarks, queTypes) => {
-  templist = [];
-  quelist = [];
-  anslist = [];
-  totalMarks = 0;
-  try {
-    const allQuestions = await questionModel.find({status:true,subject:{$in:subjects},marks:{$in:queTypes}});
-    for(var x in allQuestions) {
-      totalMarks += allQuestions[x].marks;
+var buildTestQuestionSelection = (questionIds, availableQuestions) => {
+  if(!Array.isArray(questionIds) || questionIds.length === 0) {
+    return {
+      error : 'Please select at least one question'
     }
-    if(totalMarks<maxmarks) {
-      console.log('not enough question for subjects');
-    } else {
-      var remaining = maxmarks;
-      var qIndexSet = new Set();
-      while(remaining>0) {
-        var i = Math.floor(Math.random()*allQuestions.length);
-        if(qIndexSet.has(i) || allQuestions[i].marks > remaining) {
-          continue;
-        } else {
-          qIndexSet.add(i);
-          quelist.push(allQuestions[i]._id);
-          anslist.push(allQuestions[i].answer);
-          remaining -= allQuestions[i].marks;
-        }
-      }
-    }
-    return {quelist,anslist};
-  } catch(err) {
-    console.log(err);
-    return {quelist,anslist};
   }
-  
+
+  var orderedIds = questionIds.map((id)=>id.toString());
+  if(new Set(orderedIds).size !== orderedIds.length) {
+    return {
+      error : 'A question cannot be selected more than once'
+    }
+  }
+
+  var questionsById = new Map(
+    availableQuestions.map((question)=>[question._id.toString(),question])
+  );
+  var questions = orderedIds.map((id)=>questionsById.get(id));
+  if(questions.some((question)=>!question || question.status !== true)) {
+    return {
+      error : 'One or more selected questions are unavailable or inactive'
+    }
+  }
+
+  if(questions.some((question)=>
+    !question.subject ||
+    !Number.isFinite(Number(question.marks)) ||
+    Number(question.marks) <= 0
+  )) {
+    return {
+      error : 'One or more selected questions have invalid subject or marks'
+    }
+  }
+
+  var subjects = [];
+  var queTypes = [];
+  var totalMarks = 0;
+  questions.forEach((question)=>{
+    var subjectId = question.subject._id
+      ? question.subject._id.toString()
+      : question.subject.toString();
+    var marks = Number(question.marks);
+    if(!subjects.includes(subjectId)) {
+      subjects.push(subjectId);
+    }
+    if(!queTypes.includes(marks)) {
+      queTypes.push(marks);
+    }
+    totalMarks += marks;
+  });
+
+  return {
+    questions : questions,
+    questionIds : questions.map((question)=>question._id),
+    subjects : subjects,
+    queTypes : queTypes,
+    maxmarks : totalMarks
+  }
 }
 
 var createTest = async (req,res,next) => {
   var creator = req.user || null;
   if(creator == null || req.user.usertype != 'TEACHER') {
-    res.status(401).json({
+    return res.status(401).json({
       success : false,
       message : "Permissions not granted!"
     })
   }
- 
-  //new
-  // Parse HH:mm string format to numeric minutes if string is received
+
   if (typeof req.body.duration === 'string' && req.body.duration.includes(':')) {
     const parts = req.body.duration.split(':');
-    req.body.duration = (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+    req.body.duration = Number.isInteger(hours) && Number.isInteger(minutes) &&
+      hours >= 0 && minutes >= 0 && minutes < 60
+      ? (hours * 60 + minutes) * 60
+      : '';
   }
-  //new
 
   req.check('title','Empty Title').notEmpty();
-  req.check('subjects','Invalid length of list of subjects').isArray({min:1})
-  req.check('subjects.*','Invalid Null Subject').notEmpty();
-  req.check('maxmarks','Invalid max marks').notEmpty();
-  req.check('queTypes','Invalid length of list of queTypes').isArray({min:1})
-  req.check('queTypes.*','Invalid queType').notEmpty();
+  req.check('questionIds','Select at least one question').isArray({min:1});
+  req.check('questionIds.*','Invalid question id').notEmpty();
+  req.check('duration','Invalid duration').notEmpty();
   req.check('startTime','Invalid Start Time').notEmpty();
   req.check('endTime','Invalid End Time').notEmpty();
-  //req.check('duration','Invalid duration').notEmpty();
   req.check('regStartTime','Invalid registration start time').notEmpty();
   req.check('regEndTime','Invalid registration end time').notEmpty();
   req.check('resultTime','Invalid result time').notEmpty();
@@ -100,24 +125,90 @@ var createTest = async (req,res,next) => {
     return;
   }
 
-  var genQue = await generateTestpaper(req.body.subjects,req.body.maxmarks, req.body.queTypes);
-  if(genQue.quelist.length < 1) {
-    res.json({
+  var questionIds = req.body.questionIds.map((id)=>id.toString());
+  if(questionIds.some((id)=>!mongoose.Types.ObjectId.isValid(id))) {
+    return res.json({
       success : false,
-      message : 'Not enough questions for selected subject'
+      message : 'One or more selected question IDs are invalid'
     })
-    return;
   }
+
+  var questionResult;
+  try {
+    var uniqueQuestionIds = Array.from(new Set(questionIds));
+    var availableQuestions = await questionModel.find({
+      _id : {$in:uniqueQuestionIds},
+      status : true
+    });
+    questionResult = buildTestQuestionSelection(questionIds, availableQuestions);
+  } catch(err) {
+    console.log(err);
+    return res.status(500).json({
+      success : false,
+      message : 'Unable to validate selected questions'
+    })
+  }
+
+  if(questionResult.error) {
+    return res.json({
+      success : false,
+      message : questionResult.error
+    })
+  }
+
+  var regStartTime = Date.parse(req.body.regStartTime);
+  var regEndTime = Date.parse(req.body.regEndTime);
+  var startTime = Date.parse(req.body.startTime);
+  var endTime = Date.parse(req.body.endTime);
+  var resultTime = Date.parse(req.body.resultTime);
+  var duration = Number(req.body.duration);
+
+  if([regStartTime,regEndTime,startTime,endTime,resultTime].some((time)=>!Number.isFinite(time))) {
+    return res.json({
+      success : false,
+      message : 'Invalid date and time values'
+    })
+  }
+  if(regEndTime <= regStartTime) {
+    return res.json({
+      success : false,
+      message : 'Registration end time must be after registration start time'
+    })
+  }
+  if(startTime <= regEndTime) {
+    return res.json({
+      success : false,
+      message : 'Test start time must be after registration ends'
+    })
+  }
+  if(endTime <= startTime) {
+    return res.json({
+      success : false,
+      message : 'Test end time must be after test start time'
+    })
+  }
+  if(resultTime <= endTime) {
+    return res.json({
+      success : false,
+      message : 'Result time must be after test end time'
+    })
+  }
+  if(!Number.isFinite(duration) || duration <= 0 || duration * 1000 > endTime - startTime) {
+    return res.json({
+      success : false,
+      message : 'Test duration must be positive and fit within the test window'
+    })
+  }
+
   var tempdata = new testModel({
     title : req.body.title,
-    subjects : req.body.subjects,
-    maxmarks : req.body.maxmarks,
-    queTypes : req.body.queTypes,
-    questions : genQue.quelist,
-    answers : genQue.anslist,
+    subjects : questionResult.subjects,
+    maxmarks : questionResult.maxmarks,
+    queTypes : questionResult.queTypes,
+    questions : questionResult.questionIds,
     startTime : req.body.startTime,
     endTime : req.body.endTime,
-    duration : req.body.duration,
+    duration : duration,
     regStartTime : req.body.regStartTime,
     regEndTime : req.body.regEndTime,
     resultTime : req.body.resultTime,
@@ -475,5 +566,6 @@ module.exports = {
   getUpcomingTestforStudent,
   getTestDetailsFromId,
   getTestStatus,
-  updateStatus
+  updateStatus,
+  buildTestQuestionSelection
 }

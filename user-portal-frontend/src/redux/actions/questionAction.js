@@ -78,13 +78,72 @@ export const addQuestionAction = (details) => {
     };
 };
 
+export const getAllQuestions = (filters) => {
+  return async(dispatch) => {
+    if(filters && filters.subjects.length === 0) {
+      dispatch({
+        type:ActionTypes.GET_ALL_QUESTIONS,
+        payload : {
+          questionList : []
+        }
+      });
+      return [];
+    }
+
+    try {
+      const response = await axios.get(apis.BASE + apis.GET_ALL_QUESTIONS, {
+        params : filters ? {
+          subjects : filters.subjects.join(','),
+          marks : filters.marks.join(',')
+        } : undefined,
+        headers : {
+          'Authorization':`Bearer ${Auth.retriveToken()}`
+        }
+      });
+
+      if(response.data.success) {
+        dispatch({
+          type:ActionTypes.GET_ALL_QUESTIONS,
+          payload : {
+            questionList : response.data.list
+          }
+        });
+        return response.data.list;
+      } else {
+        dispatch({
+          type:ActionTypes.SET_ALERT,
+          payload : {
+            isAlert:true,
+            type:'error',
+            title:'Unable to load questions',
+            message:response.data.message
+          }
+        });
+        return [];
+      }
+    } catch(error) {
+      dispatch({
+        type:ActionTypes.SET_ALERT,
+        payload : {
+          isAlert:true,
+          type:'error',
+          title:'Unable to load questions',
+          message:error.response?.data?.message || 'Unable to load questions'
+        }
+      });
+      return [];
+    }
+  }
+}
+
 export const searchQuestion = (details) => {
   return async(dispatch)=>{
-    axios.post(apis.BASE + apis.SEARCH_QUESTION,details,{
-      headers : {
-        'Authorization':`Bearer ${Auth.retriveToken()}`
-      }
-    }).then(response=>{
+    try {
+      const response = await axios.post(apis.BASE + apis.SEARCH_QUESTION,details,{
+        headers : {
+          'Authorization':`Bearer ${Auth.retriveToken()}`
+        }
+      });
       if(response.data.success) {
         dispatch({
           type:ActionTypes.SEARCH_QUESTION,
@@ -92,8 +151,76 @@ export const searchQuestion = (details) => {
             questionList : response.data.list
           }
         })
+      } else {
+        dispatch({
+          type:ActionTypes.SET_ALERT,
+          payload : {
+            isAlert:true,
+            type:'error',
+            title:'Unable to search questions',
+            message:response.data.message
+          }
+        })
       }
-    })
+    } catch(error) {
+      dispatch({
+        type:ActionTypes.SET_ALERT,
+        payload : {
+          isAlert:true,
+          type:'error',
+          title:'Unable to search questions',
+          message:error.response?.data?.message || 'Unable to search questions'
+        }
+      })
+    }
+  }
+}
+
+export const deleteQuestion = (id) => {
+  return async(dispatch) => {
+    try {
+      const response = await axios.post(apis.BASE + apis.DELETE_QUESTION,{id},{
+        headers : {
+          'Authorization':`Bearer ${Auth.retriveToken()}`
+        }
+      });
+
+      if(response.data.success) {
+        dispatch({
+          type:ActionTypes.DELETE_QUESTION,
+          payload : {id}
+        });
+        dispatch({
+          type:ActionTypes.SET_ALERT,
+          payload : {
+            isAlert:true,
+            type:'success',
+            title:'Success',
+            message:response.data.message
+          }
+        });
+      } else {
+        dispatch({
+          type:ActionTypes.SET_ALERT,
+          payload : {
+            isAlert:true,
+            type:'error',
+            title:'Unable to delete question',
+            message:response.data.message
+          }
+        });
+      }
+    } catch(error) {
+      dispatch({
+        type:ActionTypes.SET_ALERT,
+        payload : {
+          isAlert:true,
+          type:'error',
+          title:'Unable to delete question',
+          message:error.response?.data?.message || 'Unable to delete question'
+        }
+      });
+    }
   }
 }
 

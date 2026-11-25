@@ -1,139 +1,113 @@
 import React from "react";
 import { connect } from "react-redux";
-import LogoutButton from "../../atoms/LogoutButton/LogoutButton";
 import Auth from "../../../helper/Auth";
 import { Navigate } from "react-router-dom";
-import { getUserDetails} from "../../../redux/actions/loginAction";
+import { getUserDetails } from "../../../redux/actions/loginAction";
 import AddQuestionForm from "../../templates/AddQuestionForm/AddQuestionForm";
-import AlertBox from '../../atoms/Alertbox/AlertBox';
-import { Drawer, Typography, withStyles, AppBar, Toolbar, List, ListItem, ListItemText } from "@material-ui/core";
+import AlertBox from "../../atoms/Alertbox/AlertBox";
+import DashboardHome from "../../templates/DashboardLayout/DashboardHome";
+import DashboardLayout from "../../templates/DashboardLayout/DashboardLayout";
 import QuestionDetails from "../../templates/QuestionDetails/questionDetails";
 import CreateTestForm from "../../templates/CreateTestForm/CreateTestForm";
 import TestDetails from "../../templates/TestDetails/TestDetails";
+import HomeRoundedIcon from "@material-ui/icons/HomeRounded";
+import AddCircleOutlineRoundedIcon from "@material-ui/icons/AddCircleOutlineRounded";
+import HelpOutlineRoundedIcon from "@material-ui/icons/HelpOutlineRounded";
+import CreateRoundedIcon from "@material-ui/icons/CreateRounded";
+import AssignmentOutlinedIcon from "@material-ui/icons/AssignmentOutlined";
 
-const drawerWidth = 200
-const appbarHeight = 64
-
-const useStyles = (theme)=>({
-  drawer : {
-    width : drawerWidth,
-    height : `calc(100% - ${appbarHeight}px)`,
-    top : appbarHeight
-  },
-  drawerPaper : {
-    width : drawerWidth,
-    height : `calc(100% - ${appbarHeight}px)`,
-    top : appbarHeight
-  },
-  flex : {
-    display : 'flex'
-  },
-  content : {
-    margin:'auto'
-  },
-  addHeight : theme.mixins.toolbar,
-  title : {
-    flexGrow : 1
-  },
-  appbar : {
-    height : appbarHeight
-  }
-})
-
-class TeacherHomepage extends React.Component{
+class TeacherHomepage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      content:(<div>Welcome to Exam portal</div>), // home - welcome message addquestion - add question form
-      menuList : [{
-        title:'Home',
-        content:(<div>Welcome to Exam portal</div>)
-      },{
-        title: 'Add Question',
-        content:<AddQuestionForm/>
-      },{
-        title: 'Questions',
-        content:<QuestionDetails/>
-      },{
-        title: 'Create Test',
-        content: <CreateTestForm/>
-      },{
-        title : 'View Tests',
-        content : <TestDetails/>
-      }]
-    }
+      activeIndex: 0,
+      menuList: [
+        {
+          title: "Overview",
+          icon: HomeRoundedIcon,
+          content: (
+            <DashboardHome
+              role="Teacher"
+              description="Manage your question bank, prepare tests, and review the tests you have created."
+              actions={[
+                {
+                  title: "Add a question",
+                  description: "Create a new question for your question bank.",
+                  icon: AddCircleOutlineRoundedIcon,
+                  onClick: () => this.onMenuItemClick(1),
+                },
+                {
+                  title: "Question bank",
+                  description: "Browse and manage your existing questions.",
+                  icon: HelpOutlineRoundedIcon,
+                  onClick: () => this.onMenuItemClick(2),
+                },
+                {
+                  title: "Create a test",
+                  description: "Build a test using your available questions.",
+                  icon: CreateRoundedIcon,
+                  onClick: () => this.onMenuItemClick(3),
+                },
+              ]}
+            />
+          ),
+        },
+        {
+          title: "Add Question",
+          icon: AddCircleOutlineRoundedIcon,
+          content: <AddQuestionForm />,
+        },
+        {
+          title: "Questions",
+          icon: HelpOutlineRoundedIcon,
+          content: <QuestionDetails onAddQuestion={() => this.onMenuItemClick(1)} />,
+        },
+        {
+          title: "Create Test",
+          icon: CreateRoundedIcon,
+          content: <CreateTestForm />,
+        },
+        {
+          title: "View Tests",
+          icon: AssignmentOutlinedIcon,
+          content: <TestDetails />,
+        },
+      ],
+    };
   }
 
-  onMenuItemClick(content) {
-    this.setState({
-      ...this.state,
-      content: content
-    })
-  }
+  onMenuItemClick = (activeIndex) => {
+    this.setState({ activeIndex });
+  };
 
-  render(){
-    if(!Auth.retriveToken() || Auth.retriveToken()==='undefined'){
-      return (<Navigate to='/'/>);
-    } else if(!this.props.user.isLoggedIn) {
+  render() {
+    if (!Auth.retriveToken() || Auth.retriveToken() === "undefined") {
+      return <Navigate to="/" />;
+    } else if (!this.props.user.isLoggedIn) {
       this.props.getUserDetails();
-      return (<div></div>);
-    } else if(this.props.user.userDetails.type !== 'TEACHER') {
-      return (<Navigate to='/'/>);
+      return <div />;
+    } else if (this.props.user.userDetails.type !== "TEACHER") {
+      return <Navigate to="/" />;
     }
-    return(
-      <div>
-        <div>
-          <AppBar
-            elevation={0}
-            className={this.props.classes.appbar}
-          >
-            <Toolbar>
-                  <Typography variant='h5' className={this.props.classes.title}>
-                    Teacher Homepage
-                  </Typography>
-                  <Typography variant='h6'>
-                    welcome, {this.props.user.userDetails.username} !!
-                  </Typography>
-            </Toolbar>
-          </AppBar>
-          <div className={this.props.classes.addHeight}></div>
-        </div>
-        <div className={this.props.classes.flex}>
-          <Drawer
-            className={this.props.classes.drawer}
-            variant="permanent"
-            anchor="left"
-            classes= { {paper:this.props.classes.drawerPaper}}
-          >
-            <List>
-              {this.state.menuList.map((item,index)=>(
-                <ListItem button key={index} onClick={()=>(this.onMenuItemClick(item.content))}>
-                  <ListItemText primary={item.title}/>
-                </ListItem>
-              ))}
-              <ListItem>
-              <LogoutButton/>
-              </ListItem>
-            </List>
-          </Drawer>
-          <div className={this.props.classes.content}>
-            
-            <AlertBox></AlertBox>
-            {this.state.content}
-            
-          </div>
-        </div>
-        
-        
-      </div>
-    )
+
+    const activeItem = this.state.menuList[this.state.activeIndex];
+    return (
+      <DashboardLayout
+        title="Teacher Workspace"
+        username={this.props.user.userDetails.username}
+        items={this.state.menuList}
+        activeIndex={this.state.activeIndex}
+        onNavigate={this.onMenuItemClick}
+      >
+        <AlertBox />
+        {activeItem.content}
+      </DashboardLayout>
+    );
   }
 }
 
-const mapStatetoProps = state => ({
-  user:state.user
-})
+const mapStateToProps = (state) => ({
+  user: state.user,
+});
 
-export default withStyles(useStyles) (connect(mapStatetoProps,{
-  getUserDetails
-})(TeacherHomepage));
+export default connect(mapStateToProps, { getUserDetails })(TeacherHomepage);
